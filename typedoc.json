@@ -3,7 +3,7 @@
   "excludeExternals": true,
   "excludePrivate": true,
   "entryPoints": [
-    "./src/timer.ts"
+    "./src/index.ts"
   ],
   "disableSources": true,
   "hideGenerator": true,
