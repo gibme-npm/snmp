@@ -20,6 +20,8 @@
 
 import snmp, { SessionOptions, OID, VarBind } from 'snmp-native';
 
+export { SessionOptions, OID, VarBind };
+
 export default abstract class SNMP {
     /**
      * Attempts to fetch the SNMP OID information using the specified options and OIDs
