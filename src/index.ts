@@ -18,30 +18,69 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import snmp, { SessionOptions, OID, VarBind } from 'snmp-native';
+import snmp, { OID, SessionOptions, VarBind } from 'snmp-native';
 
 export { SessionOptions, OID, VarBind };
 
+export enum DataType {
+    Integer = 0x02,
+    OctetString = 0x04,
+    Null = 0x05,
+    ObjectIdentifier = 0x06,
+    Sequence = 0x30,
+    IPAddress = 0x40,
+    Counter = 0x41,
+    Gauge = 0x42,
+    TimeTicks = 0x43,
+    Opaque = 0x44,
+    NsapAddress = 0x45,
+    Counter64 = 0x46,
+    NoSuchObject = 0x80,
+    NoSuchInstance = 0x81,
+    EndOfMibView = 0x82,
+    PDUBase = 0xA0
+}
+
+export enum Versions {
+    SNMPv1 = 0,
+    SNMPv2c = 1
+}
+
 export default abstract class SNMP {
+    private static session = new snmp.Session();
+
     /**
-     * Attempts to fetch the SNMP OID information using the specified options and OIDs
+     * Closes the underlying SNMP session
+     */
+    public static close () {
+        return this.session.close();
+    }
+
+    /**
+     * Performs a fetch of all required values
      *
+     * @deprecated
      * @param options
      * @param oids
      */
     public static async fetch (options: SessionOptions, oids: OID[]): Promise<Map<OID, VarBind>> {
+        return this.getAll(options, oids);
+    }
+
+    /**
+     * Perform a simple GetRequest
+     *
+     * @param options
+     * @param oid
+     */
+    public static async get (
+        options: SessionOptions,
+        oid: OID
+    ): Promise<Map<OID, VarBind>> {
         return new Promise((resolve, reject) => {
-            if (oids.length === 0) {
-                return resolve(new Map<OID, VarBind>());
-            }
-
-            const session = new snmp.Session(options);
-
             const result = new Map<OID, VarBind>();
 
-            session.getAll({ oids }, (error, varbinds) => {
-                session.close();
-
+            this.session.get({ oid, ...options }, (error, varbinds) => {
                 if (error) {
                     return reject(new Error(error.toString()));
                 }
@@ -56,22 +95,87 @@ export default abstract class SNMP {
     }
 
     /**
-     * Attempts to 'walk' the specified SNMP OIDs using the specified options and OIDs
+     * Perform repeated GetRequests to fetch all the required values.
+     * Multiple OIDs will get packed into as few GetRequest packets as possible to
+     * minimize roundtrip delays.
+     *
+     * Gets will be issued serially (not in parallell) to avoid flooding hosts.
      *
      * @param options
      * @param oids
      */
-    public static async walk (options: SessionOptions, oids: OID[]): Promise<Map<OID, VarBind[]>> {
+    public static async getAll (
+        options: SessionOptions,
+        oids: OID[]
+    ): Promise<Map<OID, VarBind>> {
+        return new Promise((resolve, reject) => {
+            if (oids.length === 0) {
+                return resolve(new Map<OID, VarBind>());
+            }
+
+            const result = new Map<OID, VarBind>();
+
+            this.session.getAll({ oids, ...options }, (error, varbinds) => {
+                if (error) {
+                    return reject(new Error(error.toString()));
+                }
+
+                for (const varbind of varbinds) {
+                    result.set(`.${varbind.oid.join('.')}`, varbind);
+                }
+
+                return resolve(result);
+            });
+        });
+    }
+
+    /**
+     * Perform a simple GetNextRequest
+     *
+     * @param options
+     * @param oid
+     */
+    public static async getNext (
+        options: SessionOptions,
+        oid: OID
+    ): Promise<Map<OID, VarBind>> {
+        return new Promise((resolve, reject) => {
+            const result = new Map<OID, VarBind>();
+
+            this.session.getNext({ oid, ...options }, (error, varbinds) => {
+                if (error) {
+                    return reject(new Error(error.toString()));
+                }
+
+                for (const varbind of varbinds) {
+                    result.set(`.${varbind.oid.join('.')}`, varbind);
+                }
+
+                return resolve(result);
+            });
+        });
+    }
+
+    /**
+     * Perform repeated GetNextRequests to fetch all values in the specified tree
+     *
+     * Note: This is equivalent to a 'walk'
+     *
+     * @param options
+     * @param oids
+     */
+    public static async getSubtree (
+        options: SessionOptions,
+        oids: OID[]
+    ): Promise<Map<OID, VarBind[]>> {
         if (oids.length === 0) {
             return new Map<OID, VarBind[]>();
         }
 
-        const session = new snmp.Session(options);
-
         const result = new Map<OID, VarBind[]>();
 
         const run = async (oid: OID): Promise<[OID, VarBind[]]> => new Promise((resolve, reject) => {
-            session.getSubtree({ oid }, (error, varbinds) => {
+            this.session.getSubtree({ oid, ...options }, (error, varbinds) => {
                 if (error) {
                     return reject(new Error(error.toString()));
                 }
@@ -82,12 +186,52 @@ export default abstract class SNMP {
 
         const responses = await Promise.all(oids.map(oid => run(oid)));
 
-        session.close();
-
         for (const [oid, varbinds] of responses) {
             result.set(oid, varbinds);
         }
 
         return result;
+    }
+
+    /**
+     * Perform a simple SetRequest
+     *
+     * @param options
+     * @param oid
+     * @param type
+     * @param value
+     */
+    public static async set (
+        options: SessionOptions,
+        oid: OID,
+        type?: DataType,
+        value?: any
+    ): Promise<Map<OID, VarBind>> {
+        return new Promise((resolve, reject) => {
+            const result = new Map<OID, VarBind>();
+
+            this.session.set({ oid, type, value, ...options }, (error, varbinds) => {
+                if (error) {
+                    return reject(new Error(error.toString()));
+                }
+
+                for (const varbind of varbinds) {
+                    result.set(`.${varbind.oid.join('.')}`, varbind);
+                }
+
+                return resolve(result);
+            });
+        });
+    }
+
+    /**
+     * Performs a walk of the supplied SNMP oids
+     *
+     * @deprecated
+     * @param options
+     * @param oids
+     */
+    public static async walk (options: SessionOptions, oids: OID[]): Promise<Map<OID, VarBind[]>> {
+        return this.getSubtree(options, oids);
     }
 }

@@ -29,9 +29,22 @@ const test_oid = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.13';
 const test_walk = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
 
 describe('Unit Tests', () => {
-    it('fetch()', async function () {
+    it('get()', async function () {
         try {
-            const response = await SNMP.fetch({
+            const response = await SNMP.get({
+                host: process.env.SNMP_HOST,
+                community: process.env.SNMP_COMMUNITY
+            }, test_oid);
+
+            assert.ok(response.get(test_oid));
+        } catch {
+            this.skip();
+        }
+    });
+
+    it('getAll()', async function () {
+        try {
+            const response = await SNMP.getAll({
                 host: process.env.SNMP_HOST,
                 community: process.env.SNMP_COMMUNITY
             }, [test_oid]);
@@ -42,9 +55,24 @@ describe('Unit Tests', () => {
         }
     });
 
-    it('walk()', async function () {
+    it('getNext()', async function () {
         try {
-            const response = await SNMP.walk({
+            const response = await SNMP.getNext({
+                host: process.env.SNMP_HOST,
+                community: process.env.SNMP_COMMUNITY
+            }, test_walk);
+
+            for (const varbind of response.values()) {
+                assert.ok(`.${varbind.oid.join('.')}`.includes(test_oid));
+            }
+        } catch {
+            this.skip();
+        }
+    });
+
+    it('getSubtree()', async function () {
+        try {
+            const response = await SNMP.getSubtree({
                 host: process.env.SNMP_HOST,
                 community: process.env.SNMP_COMMUNITY
             }, [test_walk]);

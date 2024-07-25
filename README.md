@@ -1,4 +1,4 @@
-# Simple SNMP helper/wrapper
+# Simple SNMP Async/Await helper/wrapper
 
 ## Documentation
 
