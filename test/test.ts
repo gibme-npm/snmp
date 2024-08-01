@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 import { it, describe } from 'mocha';
-import SNMP from '../src/index';
+import SNMP, { OID } from '../src/index';
 import { config } from 'dotenv';
 import assert from 'assert';
 
 config();
 
-const test_oid = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.13';
-const test_walk = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
+const test_walk: OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
+const test_oid: OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.17';
 
 describe('Unit Tests', () => {
     it('get()', async function () {
@@ -36,7 +36,7 @@ describe('Unit Tests', () => {
                 community: process.env.SNMP_COMMUNITY
             }, test_oid);
 
-            assert.ok(response.get(test_oid));
+            assert.ok(response[test_oid]);
         } catch {
             this.skip();
         }
@@ -49,7 +49,7 @@ describe('Unit Tests', () => {
                 community: process.env.SNMP_COMMUNITY
             }, [test_oid]);
 
-            assert.ok(response.get(test_oid));
+            assert.ok(response[test_oid]);
         } catch {
             this.skip();
         }
@@ -62,8 +62,8 @@ describe('Unit Tests', () => {
                 community: process.env.SNMP_COMMUNITY
             }, test_walk);
 
-            for (const varbind of response.values()) {
-                assert.ok(`.${varbind.oid.join('.')}`.includes(test_oid));
+            for (const oid in response) {
+                assert.ok(oid.startsWith(test_walk));
             }
         } catch {
             this.skip();
@@ -77,7 +77,7 @@ describe('Unit Tests', () => {
                 community: process.env.SNMP_COMMUNITY
             }, [test_walk]);
 
-            assert.ok(response.get(test_walk));
+            assert.ok(response[test_walk]);
         } catch {
             this.skip();
         }
