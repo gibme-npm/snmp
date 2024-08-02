@@ -52,7 +52,7 @@ export interface VarBind extends Omit<SNMPVarBind, 'oid'> {
     oid: OID;
 }
 
-export type SNMPResult<Type> = Record<OID, Type>;
+export type SNMPResult<Type> = Record<OID, Type | undefined>;
 
 export default abstract class SNMP {
     private static session = new snmp.Session();
