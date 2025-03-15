@@ -29,57 +29,125 @@ const test_walk: OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
 const test_oid: OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.17';
 
 describe('Unit Tests', () => {
-    it('get()', async function () {
-        try {
-            const response = await SNMP.get({
-                host: process.env.SNMP_HOST,
-                community: process.env.SNMP_COMMUNITY
-            }, test_oid);
+    describe('Static Methods', async () => {
+        after(() => {
+            SNMP.close();
+        });
 
-            assert.ok(response[test_oid]);
-        } catch {
-            this.skip();
-        }
-    });
+        it('get()', async function () {
+            try {
+                const response = await SNMP.get({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, test_oid);
 
-    it('getAll()', async function () {
-        try {
-            const response = await SNMP.getAll({
-                host: process.env.SNMP_HOST,
-                community: process.env.SNMP_COMMUNITY
-            }, [test_oid]);
-
-            assert.ok(response[test_oid]);
-        } catch {
-            this.skip();
-        }
-    });
-
-    it('getNext()', async function () {
-        try {
-            const response = await SNMP.getNext({
-                host: process.env.SNMP_HOST,
-                community: process.env.SNMP_COMMUNITY
-            }, test_walk);
-
-            for (const oid in response) {
-                assert.ok(oid.startsWith(test_walk));
+                assert.ok(response[test_oid]);
+            } catch {
+                this.skip();
             }
-        } catch {
-            this.skip();
-        }
+        });
+
+        it('getAll()', async function () {
+            try {
+                const response = await SNMP.getAll({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, [test_oid]);
+
+                assert.ok(response[test_oid]);
+            } catch {
+                this.skip();
+            }
+        });
+
+        it('getNext()', async function () {
+            try {
+                const response = await SNMP.getNext({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, test_walk);
+
+                for (const oid in response) {
+                    assert.ok(oid.startsWith(test_walk));
+                }
+            } catch {
+                this.skip();
+            }
+        });
+
+        it('getSubtree()', async function () {
+            try {
+                const response = await SNMP.getSubtree({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, [test_walk]);
+
+                assert.ok(response[test_walk]);
+            } catch {
+                this.skip();
+            }
+        });
     });
 
-    it('getSubtree()', async function () {
-        try {
-            const response = await SNMP.getSubtree({
-                host: process.env.SNMP_HOST,
-                community: process.env.SNMP_COMMUNITY
-            }, [test_walk]);
+    describe('Instance Methods', async () => {
+        const snmp = new SNMP();
 
-            assert.ok(response[test_walk]);
-        } catch {
-            this.skip();
-        }
+        after(() => {
+            snmp.close();
+        });
+
+        it('get()', async function () {
+            try {
+                const response = await snmp.get({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, test_oid);
+
+                assert.ok(response[test_oid]);
+            } catch {
+                this.skip();
+            }
+        });
+
+        it('getAll()', async function () {
+            try {
+                const response = await snmp.getAll({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, [test_oid]);
+
+                assert.ok(response[test_oid]);
+            } catch {
+                this.skip();
+            }
+        });
+
+        it('getNext()', async function () {
+            try {
+                const response = await snmp.getNext({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, test_walk);
+
+                for (const oid in response) {
+                    assert.ok(oid.startsWith(test_walk));
+                }
+            } catch {
+                this.skip();
+            }
+        });
+
+        it('getSubtree()', async function () {
+            try {
+                const response = await snmp.getSubtree({
+                    host: process.env.SNMP_HOST,
+                    community: process.env.SNMP_COMMUNITY
+                }, [test_walk]);
+
+                assert.ok(response[test_walk]);
+            } catch {
+                this.skip();
+            }
+        });
     });
 });
