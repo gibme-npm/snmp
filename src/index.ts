@@ -1,4 +1,4 @@
-// Copyright (c) 2024, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2024-2025, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,43 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import snmp, { SessionOptions, VarBind as SNMPVarBind } from 'snmp-native';
+import snmp, { VarBind as SNMPVarBind } from 'snmp-native';
 
-export { SessionOptions };
-
-export enum DataType {
-    Integer = 0x02,
-    OctetString = 0x04,
-    Null = 0x05,
-    ObjectIdentifier = 0x06,
-    Sequence = 0x30,
-    IPAddress = 0x40,
-    Counter = 0x41,
-    Gauge = 0x42,
-    TimeTicks = 0x43,
-    Opaque = 0x44,
-    NsapAddress = 0x45,
-    Counter64 = 0x46,
-    NoSuchObject = 0x80,
-    NoSuchInstance = 0x81,
-    EndOfMibView = 0x82,
-    PDUBase = 0xA0
-}
-
-export enum Versions {
-    SNMPv1 = 0,
-    SNMPv2c = 1
-}
-
-export type OID = `.${string}`;
-
-export interface VarBind extends Omit<SNMPVarBind, 'oid'> {
-    oid: OID;
-}
-
-export type SNMPResult<Type> = Record<OID, Type | undefined>;
-
-export default class SNMP {
+export class SNMP {
     private readonly _session = new snmp.Session();
 
     private static _session?: snmp.Session;
@@ -82,7 +48,7 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public static async fetch (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind>> {
+    public static async fetch (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind>> {
         return this.getAll(options, oids);
     }
 
@@ -92,9 +58,9 @@ export default class SNMP {
      * @param oid
      */
     public static async get (
-        options: SessionOptions,
-        oid: OID
-    ): Promise<SNMPResult<VarBind>> {
+        options: SNMP.Options,
+        oid: SNMP.OID
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._get(this.session, options, oid);
     }
 
@@ -107,7 +73,7 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public static async getAll (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind>> {
+    public static async getAll (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._getAll(this.session, options, oids);
     }
 
@@ -117,9 +83,9 @@ export default class SNMP {
      * @param oid
      */
     public static async getNext (
-        options: SessionOptions,
-        oid: OID
-    ): Promise<SNMPResult<VarBind>> {
+        options: SNMP.Options,
+        oid: SNMP.OID
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._getNext(this.session, options, oid);
     }
 
@@ -130,7 +96,7 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public static async getSubtree (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind[]>> {
+    public static async getSubtree (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind[]>> {
         return SNMP._getSubtree(this.session, options, oids);
     }
 
@@ -142,11 +108,11 @@ export default class SNMP {
      * @param value
      */
     public static async set (
-        options: SessionOptions,
-        oid: OID,
-        type?: DataType,
+        options: SNMP.Options,
+        oid: SNMP.OID,
+        type?: SNMP.DataType,
         value?: any
-    ): Promise<SNMPResult<VarBind>> {
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._set(this.session, options, oid, type, value);
     }
 
@@ -156,13 +122,17 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public static async walk (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind[]>> {
+    public static async walk (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind[]>> {
         return this.getSubtree(options, oids);
     }
 
-    private static async _get (session: snmp.Session, options: SessionOptions, oid: OID): Promise<SNMPResult<VarBind>> {
+    private static async _get (
+        session: snmp.Session,
+        options: SNMP.Options,
+        oid: SNMP.OID
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return new Promise((resolve, reject) => {
-            const result: SNMPResult<VarBind> = {};
+            const result: SNMP.Response<SNMP.VarBind> = {};
 
             session.get({ oid, ...options }, (error, varbinds) => {
                 if (error) {
@@ -172,7 +142,7 @@ export default class SNMP {
                 for (let i = 0; i < varbinds.length; ++i) {
                     const varbind = varbinds[i];
 
-                    const oid: OID = `.${varbind.oid.join('.')}`;
+                    const oid: SNMP.OID = `.${varbind.oid.join('.')}`;
 
                     result[oid] = {
                         ...varbind,
@@ -187,11 +157,11 @@ export default class SNMP {
 
     private static async _getAll (
         session: snmp.Session,
-        options: SessionOptions,
-        oids: OID[]
-    ): Promise<SNMPResult<VarBind>> {
+        options: SNMP.Options,
+        oids: SNMP.OID[]
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return new Promise((resolve, reject) => {
-            const result: SNMPResult<VarBind> = {};
+            const result: SNMP.Response<SNMP.VarBind> = {};
 
             if (oids.length === 0) return resolve(result);
 
@@ -203,7 +173,7 @@ export default class SNMP {
                 for (let i = 0; i < varbinds.length; ++i) {
                     const varbind = varbinds[i];
 
-                    const oid: OID = `.${varbind.oid.join('.')}`;
+                    const oid: SNMP.OID = `.${varbind.oid.join('.')}`;
 
                     result[oid] = {
                         ...varbind,
@@ -218,11 +188,11 @@ export default class SNMP {
 
     private static async _getNext (
         session: snmp.Session,
-        options: SessionOptions,
-        oid: OID
-    ): Promise<SNMPResult<VarBind>> {
+        options: SNMP.Options,
+        oid: SNMP.OID
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return new Promise((resolve, reject) => {
-            const result: SNMPResult<VarBind> = {};
+            const result: SNMP.Response<SNMP.VarBind> = {};
 
             session.getNext({ oid, ...options }, (error, varbinds) => {
                 if (error) {
@@ -232,7 +202,7 @@ export default class SNMP {
                 for (let i = 0; i < varbinds.length; ++i) {
                     const varbind = varbinds[i];
 
-                    const oid: OID = `.${varbind.oid.join('.')}`;
+                    const oid: SNMP.OID = `.${varbind.oid.join('.')}`;
                     result[oid] = {
                         ...varbind,
                         oid
@@ -246,23 +216,23 @@ export default class SNMP {
 
     private static async _getSubtree (
         session: snmp.Session,
-        options: SessionOptions,
-        oids: OID[]
-    ): Promise<SNMPResult<VarBind[]>> {
-        const result: SNMPResult<VarBind[]> = {};
+        options: SNMP.Options,
+        oids: SNMP.OID[]
+    ): Promise<SNMP.Response<SNMP.VarBind[]>> {
+        const result: SNMP.Response<SNMP.VarBind[]> = {};
 
         if (oids.length === 0) {
             return result;
         }
 
-        const run = async (oid: OID): Promise<[OID, VarBind[]]> => new Promise((resolve, reject) => {
+        const run = async (oid: SNMP.OID): Promise<[SNMP.OID, SNMP.VarBind[]]> => new Promise((resolve, reject) => {
             session.getSubtree({ oid, ...options }, (error, varbinds) => {
                 if (error) {
                     return reject(new Error(error.toString()));
                 }
 
                 return resolve([oid, varbinds.map(varbind => {
-                    const oid: OID = `.${varbind.oid.join('.')}`;
+                    const oid: SNMP.OID = `.${varbind.oid.join('.')}`;
 
                     return {
                         ...varbind,
@@ -285,13 +255,13 @@ export default class SNMP {
 
     private static async _set (
         session: snmp.Session,
-        options: SessionOptions,
-        oid: OID,
-        type?: DataType,
+        options: SNMP.Options,
+        oid: SNMP.OID,
+        type?: SNMP.DataType,
         value?: any
-    ): Promise<SNMPResult<VarBind>> {
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return new Promise((resolve, reject) => {
-            const result: SNMPResult<VarBind> = {};
+            const result: SNMP.Response<SNMP.VarBind> = {};
 
             session.set({ oid, type, value, ...options }, (error, varbinds) => {
                 if (error) {
@@ -301,7 +271,7 @@ export default class SNMP {
                 for (let i = 0; i < varbinds.length; ++i) {
                     const varbind = varbinds[i];
 
-                    const oid: OID = `.${varbind.oid.join('.')}`;
+                    const oid: SNMP.OID = `.${varbind.oid.join('.')}`;
 
                     result[oid] = {
                         ...varbind,
@@ -327,7 +297,7 @@ export default class SNMP {
      * @param oids
      * @deprecated
      */
-    public async fetch (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind>> {
+    public async fetch (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind>> {
         return this.getAll(options, oids);
     }
 
@@ -336,7 +306,7 @@ export default class SNMP {
      * @param options
      * @param oid
      */
-    public async get (options: SessionOptions, oid: OID): Promise<SNMPResult<VarBind>> {
+    public async get (options: SNMP.Options, oid: SNMP.OID): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._get(this.session, options, oid);
     }
 
@@ -349,7 +319,7 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public async getAll (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind>> {
+    public async getAll (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._getAll(this.session, options, oids);
     }
 
@@ -358,7 +328,7 @@ export default class SNMP {
      * @param options
      * @param oid
      */
-    public async getNext (options: SessionOptions, oid: OID): Promise<SNMPResult<VarBind>> {
+    public async getNext (options: SNMP.Options, oid: SNMP.OID): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._getNext(this.session, options, oid);
     }
 
@@ -369,7 +339,7 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public async getSubtree (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind[]>> {
+    public async getSubtree (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind[]>> {
         return SNMP._getSubtree(this.session, options, oids);
     }
 
@@ -381,11 +351,11 @@ export default class SNMP {
      * @param value
      */
     public async set (
-        options: SessionOptions,
-        oid: OID,
-        type?: DataType,
+        options: SNMP.Options,
+        oid: SNMP.OID,
+        type?: SNMP.DataType,
         value?: any
-    ): Promise<SNMPResult<VarBind>> {
+    ): Promise<SNMP.Response<SNMP.VarBind>> {
         return SNMP._set(this.session, options, oid, type, value);
     }
 
@@ -395,7 +365,45 @@ export default class SNMP {
      * @param options
      * @param oids
      */
-    public async walk (options: SessionOptions, oids: OID[]): Promise<SNMPResult<VarBind[]>> {
+    public async walk (options: SNMP.Options, oids: SNMP.OID[]): Promise<SNMP.Response<SNMP.VarBind[]>> {
         return this.getSubtree(options, oids);
     }
 }
+
+export namespace SNMP {
+    export enum DataType {
+        Integer = 0x02,
+        OctetString = 0x04,
+        Null = 0x05,
+        ObjectIdentifier = 0x06,
+        Sequence = 0x30,
+        IPAddress = 0x40,
+        Counter = 0x41,
+        Gauge = 0x42,
+        TimeTicks = 0x43,
+        Opaque = 0x44,
+        NsapAddress = 0x45,
+        Counter64 = 0x46,
+        NoSuchObject = 0x80,
+        NoSuchInstance = 0x81,
+        EndOfMibView = 0x82,
+        PDUBase = 0xA0
+    }
+
+    export enum Versions {
+        SNMPv1 = 0,
+        SNMPv2c = 1
+    }
+
+    export type Options = snmp.SessionOptions;
+
+    export type OID = `.${string}`;
+
+    export type VarBind = Omit<SNMPVarBind, 'oid'> & {
+        oid: OID;
+    }
+
+    export type Response<Type> = Record<OID, Type | undefined>;
+}
+
+export default SNMP;

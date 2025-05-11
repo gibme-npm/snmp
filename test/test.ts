@@ -1,4 +1,4 @@
-// Copyright (c) 2024, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2024-2025, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 import { it, describe } from 'mocha';
-import SNMP, { OID } from '../src/index';
+import SNMP from '../src';
 import { config } from 'dotenv';
 import assert from 'assert';
 
 config();
 
-const test_walk: OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
-const test_oid: OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.17';
+const test_walk: SNMP.OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
+const test_oid: SNMP.OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.17';
 
 describe('Unit Tests', () => {
     describe('Static Methods', async () => {

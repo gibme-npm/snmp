@@ -1,6 +1,6 @@
 {
   "name": "@gibme/snmp",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "A simple SNMP helper/wrapper",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,7 +30,7 @@
   },
   "homepage": "https://gibme-npm.github.io/snmp/",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "engineStrict": true,
   "author": {
@@ -39,10 +39,10 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.7",
+    "@types/node": "^22.15.17",
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.5.0",
     "eslint": "^8.56.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.29.1",
@@ -51,8 +51,8 @@
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.25.7",
-    "typescript": "^5.3.3"
+    "typedoc": "^0.28.4",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@types/snmp-native": "^1.2.5",
