@@ -23,7 +23,7 @@ import SNMP from '../src';
 import { config } from 'dotenv';
 import assert from 'assert';
 
-config();
+config({ quiet: true });
 
 const test_walk: SNMP.OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
 const test_oid: SNMP.OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.17';
