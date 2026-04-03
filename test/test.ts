@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { it, describe } from 'mocha';
+import { it, describe, after } from 'node:test';
 import SNMP from '../src';
 import { config } from 'dotenv';
 import assert from 'assert';
@@ -29,12 +29,12 @@ const test_walk: SNMP.OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2';
 const test_oid: SNMP.OID = '.1.3.6.1.4.1.14988.1.1.3.100.1.2.17';
 
 describe('Unit Tests', () => {
-    describe('Static Methods', async () => {
+    describe('Static Methods', () => {
         after(() => {
             SNMP.close();
         });
 
-        it('get()', async function () {
+        it('get()', { skip: false }, async (t) => {
             try {
                 const response = await SNMP.get({
                     host: process.env.SNMP_HOST,
@@ -43,11 +43,11 @@ describe('Unit Tests', () => {
 
                 assert.ok(response[test_oid]);
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
 
-        it('getAll()', async function () {
+        it('getAll()', { skip: false }, async (t) => {
             try {
                 const response = await SNMP.getAll({
                     host: process.env.SNMP_HOST,
@@ -56,11 +56,11 @@ describe('Unit Tests', () => {
 
                 assert.ok(response[test_oid]);
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
 
-        it('getNext()', async function () {
+        it('getNext()', { skip: false }, async (t) => {
             try {
                 const response = await SNMP.getNext({
                     host: process.env.SNMP_HOST,
@@ -71,11 +71,11 @@ describe('Unit Tests', () => {
                     assert.ok(oid.startsWith(test_walk));
                 }
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
 
-        it('getSubtree()', async function () {
+        it('getSubtree()', { skip: false }, async (t) => {
             try {
                 const response = await SNMP.getSubtree({
                     host: process.env.SNMP_HOST,
@@ -84,19 +84,19 @@ describe('Unit Tests', () => {
 
                 assert.ok(response[test_walk]);
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
     });
 
-    describe('Instance Methods', async () => {
+    describe('Instance Methods', () => {
         const snmp = new SNMP();
 
         after(() => {
             snmp.close();
         });
 
-        it('get()', async function () {
+        it('get()', { skip: false }, async (t) => {
             try {
                 const response = await snmp.get({
                     host: process.env.SNMP_HOST,
@@ -105,11 +105,11 @@ describe('Unit Tests', () => {
 
                 assert.ok(response[test_oid]);
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
 
-        it('getAll()', async function () {
+        it('getAll()', { skip: false }, async (t) => {
             try {
                 const response = await snmp.getAll({
                     host: process.env.SNMP_HOST,
@@ -118,11 +118,11 @@ describe('Unit Tests', () => {
 
                 assert.ok(response[test_oid]);
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
 
-        it('getNext()', async function () {
+        it('getNext()', { skip: false }, async (t) => {
             try {
                 const response = await snmp.getNext({
                     host: process.env.SNMP_HOST,
@@ -133,11 +133,11 @@ describe('Unit Tests', () => {
                     assert.ok(oid.startsWith(test_walk));
                 }
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
 
-        it('getSubtree()', async function () {
+        it('getSubtree()', { skip: false }, async (t) => {
             try {
                 const response = await snmp.getSubtree({
                     host: process.env.SNMP_HOST,
@@ -146,7 +146,7 @@ describe('Unit Tests', () => {
 
                 assert.ok(response[test_walk]);
             } catch {
-                this.skip();
+                t.skip('SNMP host not available');
             }
         });
     });
